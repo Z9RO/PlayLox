@@ -64,4 +64,17 @@ class Token:
         self.line = line
 
     def __str__(self):
-        return f"{self.type.name} {self.lexeme} {self.literal}"
+        return f"line {self.line}: {self.type.name} {self.lexeme} {self.literal} "
+
+    def __eq__(self, other):
+        if not isinstance(other, Token):
+            return False
+
+        return (self.type, self.lexeme, self.line) == (
+            other.type,
+            other.lexeme,
+            other.line,
+        )
+
+    def __repr__(self):
+        return f"Token({self.type}, {self.lexeme}, {self.line})"

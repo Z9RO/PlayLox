@@ -43,19 +43,20 @@ class Scanner:
         self.start = 0
         self.current = 0
         self.line = 1
+        self.tokens = []
 
-    def scanTokens(self) -> list[Token]:
+    def scan_tokens(self) -> list[Token]:
         while not self.is_at_end():
             self.start = self.current
-            self.scanToken()
+            self.scan_token()
 
-        self.add_token(TokenType.EOF)
+        self.tokens.append(Token(TokenType.EOF, "", None, self.line))
         return self.tokens
 
     def is_at_end(self) -> bool:
         return self.current >= len(self.source)
 
-    def scanToken(self) -> None:
+    def scan_token(self) -> None:
         c = self.advance()
         match c:
             case "(":
@@ -109,7 +110,7 @@ class Scanner:
             case c if isdigit(c):
                 self.number()
             case c if is_alpha(c):
-                pass
+                self.identifier()
             case c:
                 error.error(self.line, f"Unexpected character: {c}.")
 
@@ -127,7 +128,7 @@ class Scanner:
     def match(self, expected: str) -> bool:
         if self.is_at_end():
             return False
-        elif not self.source.startswith(expected):
+        elif not self.source[self.current:].startswith(expected):
             return False
         else:
             self.current += len(expected)
@@ -146,6 +147,8 @@ class Scanner:
 
     def string(self) -> None:
         while (self.peek() != '"') and (not self.is_at_end()):
+            if self.peek() == '\n':
+                self.line += 1
             self.advance()
 
         if self.is_at_end():
