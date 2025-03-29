@@ -20,3 +20,8 @@ distribution = false
 
 [tool.pdm.scripts]
 plox = "python src/plox"
+
+[dependency-groups]
+dev = [
+    "pyright>=1.1.398",
+]
