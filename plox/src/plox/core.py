@@ -1,8 +1,10 @@
 def runFile(source: str) -> None:
     print(f"run source file {source}")
 
-def runPrompt()-> None:
+
+def runPrompt() -> None:
     print("run prompt")
+
 
 def main(args: list[str] | None = None) -> None:
     if (args is None) or len(args) == 0:
