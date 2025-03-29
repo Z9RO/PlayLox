@@ -14,12 +14,12 @@ requires-python = "==3.13.*"
 readme = "README.md"
 license = {text = "MIT"}
 
-
 [tool.pdm]
 distribution = false
 
 [tool.pdm.scripts]
 plox = "python src/plox"
+test = "python -m unittest discover -s tests -p 'test_*.py'"
 
 [dependency-groups]
 dev = [
