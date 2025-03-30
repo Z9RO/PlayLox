@@ -128,12 +128,12 @@ class Scanner:
         if self._is_at_end():
             return "\n"
         else:
-            return self._source[self._current : self._current + 1]
+            return self._source[self._current]
 
     def _peek_next(self) -> str:
         if (self._current + 1) >= len(self._source):
             return "\n"
-        return self._source[self._current + 1 : self._current + 2]
+        return self._source[self._current + 1]
 
     def _string(self) -> None:
         while (self._peek() != '"') and (not self._is_at_end()):
@@ -159,7 +159,9 @@ class Scanner:
             while isdigit(self._peek()):
                 self._advance()
 
-        self._add_token(TokenType.NUMBER, float(self._source[self._start : self._current]))
+        self._add_token(
+            TokenType.NUMBER, float(self._source[self._start : self._current])
+        )
 
     def _identifier(self) -> None:
         while is_digit_or_alpha(self._peek()) or self._peek() == "_":
