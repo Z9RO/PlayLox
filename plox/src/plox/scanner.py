@@ -51,10 +51,12 @@ _DOUBLE_CHAR_TOKENS = {
     ">": (TokenType.GREATER_EQUAL, TokenType.GREATER),
 }
 
+
 @dataclass
 class ScannerConfig:
     comment_as_token: bool = False
     multi_line_comments: bool = False
+    nest_comments: bool = False
 
 
 class Scanner:
@@ -97,8 +99,10 @@ class Scanner:
                 while (self._peek() != "\n") and (not self._is_at_end()):
                     self._advance()
                 if self._config.comment_as_token:
-                    comment = self._source[self._start+2:self._current]
+                    comment = self._source[self._start + 2 : self._current]
                     self._add_token(TokenType.SINGLELINECOMMENT, comment)
+            elif self._config.multi_line_comments and self._match("*"):
+                self._multiple_line_comments()
             else:
                 self._add_token(TokenType.SLASH)
         elif c in "\r \t":
@@ -180,3 +184,15 @@ class Scanner:
         text = self._source[self._start : self._current]
         type = _KEYWORDS.get(text, TokenType.IDENTIFIER)
         self._add_token(type)
+
+    def _multiple_line_comments(self) -> None:
+        while not self._is_at_end():
+            c = self._advance()
+            if c == "\n":
+                self._line += 1
+            elif c == "*" and self._peek() == "/":
+                self._advance()
+                if self._config.comment_as_token:
+                    comment = self._source[self._start + 2 : self._current - 2]
+                    self._add_token(TokenType.MULTILINECOMMENT, comment)
+                return

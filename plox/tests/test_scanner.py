@@ -19,29 +19,29 @@ class TestScanner(unittest.TestCase):
         line"'''
         scanner = Scanner(source)
         result = scanner.scan_tokens()
-        multiple_line = '''"multiple
-        line"'''
+        multiple_line = """multiple
+        line"""
         expected = [
             Token(TokenType.IDENTIFIER, "s", None, 1),
             Token(TokenType.EQUAL, "=", None, 1),
-            Token(TokenType.STRING, multiple_line, None, 2),
+            Token(TokenType.STRING, "", multiple_line, 2),
             Token(TokenType.EOF, "", None, 2),
         ]
         self.assertEqual(result, expected)
 
     def test_comments(self):
-        source = ''' is1 = a  == 1 // inline comments
+        source = """ is1 = a  == 1 // inline comments
         // all line are comments
-        '''
+        """
         scanner = Scanner(source)
         result = scanner.scan_tokens()
         expected = [
-            Token(TokenType.IDENTIFIER, 'is1', None, 1),
-            Token(TokenType.EQUAL, '=', None, 1),
-            Token(TokenType.IDENTIFIER, 'a', None, 1),
-            Token(TokenType.EQUAL_EQUAL, '==', None, 1),
-            Token(TokenType.NUMBER, '1', None, 1),
-            Token(TokenType.EOF, '', None, 3),
+            Token(TokenType.IDENTIFIER, "is1", None, 1),
+            Token(TokenType.EQUAL, "=", None, 1),
+            Token(TokenType.IDENTIFIER, "a", None, 1),
+            Token(TokenType.EQUAL_EQUAL, "==", None, 1),
+            Token(TokenType.NUMBER, "1", None, 1),
+            Token(TokenType.EOF, "", None, 3),
         ]
         self.assertEqual(result, expected)
 
@@ -77,11 +77,30 @@ class TestScanner(unittest.TestCase):
         result = scanner.scan_tokens()
         expected = [
             Token(TokenType.NUMBER, "1", None, 1),
-            Token(TokenType.SINGLELINECOMMENT, "// this is comment", None, 1),
+            Token(TokenType.SINGLELINECOMMENT, "", " this is comment", 1),
             Token(TokenType.EOF, "", None, 1),
         ]
         self.assertEqual(result, expected)
 
+    def test_multi_line_comments(self):
+        source = """1 /*23*3*/
+        2 /* 00
+        90
+        */"""
+        config = ScannerConfig(True, True)
+        scanner = Scanner(source, config)
+        result = scanner.scan_tokens()
+        comments = """ 00
+        90
+        """
+        expected = [
+            Token(TokenType.NUMBER, "1", None, 1),
+            Token(TokenType.MULTILINECOMMENT, "", "23*3", 1),
+            Token(TokenType.NUMBER, "2", None, 2),
+            Token(TokenType.MULTILINECOMMENT, "", comments, 4),
+            Token(TokenType.EOF, "", None, 4),
+        ]
+        self.assertEqual(result, expected)
 
 
 if __name__ == "__main__":
