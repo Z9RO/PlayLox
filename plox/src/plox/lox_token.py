@@ -48,6 +48,10 @@ class TokenType(Enum):
     VAR = (auto(),)
     WHILE = (auto(),)
 
+    # Comment.
+    SINGLELINECOMMENT = (auto(),)
+    MULTILINECOMMENT = (auto(),)
+
     EOF = (auto(),)
 
 
@@ -70,8 +74,17 @@ class Token:
         if not isinstance(other, Token):
             return False
 
-        return (self.type, self.lexeme, self.line) == (
-            other.type,
+        if self.type != other.type:
+            return False
+
+        if self.type in [
+            TokenType.STRING,
+            TokenType.SINGLELINECOMMENT,
+            TokenType.MULTILINECOMMENT,
+        ]:
+            return (self.literal, self.line) == (other.literal, other.line)
+
+        return (self.lexeme, self.line) == (
             other.lexeme,
             other.line,
         )

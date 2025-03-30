@@ -1,6 +1,7 @@
 from curses.ascii import isalpha, isdigit
+from dataclasses import dataclass
 from plox import error
-from plox.token import Token, TokenType
+from plox.lox_token import Token, TokenType
 
 
 def is_alpha(char: str) -> bool:
@@ -51,19 +52,28 @@ _DOUBLE_CHAR_TOKENS = {
 }
 
 
+@dataclass
+class ScannerConfig:
+    comment_as_token: bool = False
+    multi_line_comments: bool = False
+    nest_comments: bool = False
+
+
 class Scanner:
     _source: str
     _tokens: list[Token]
     _start: int
     _current: int
     _line: int
+    _config: ScannerConfig
 
-    def __init__(self, source: str):
+    def __init__(self, source: str, config: ScannerConfig | None = None):
         self._source = source
         self._start = 0
         self._current = 0
         self._line = 1
         self._tokens = []
+        self._config = config if config is not None else ScannerConfig()
 
     def scan_tokens(self) -> list[Token]:
         while not self._is_at_end():
@@ -88,6 +98,14 @@ class Scanner:
             if self._match("/"):
                 while (self._peek() != "\n") and (not self._is_at_end()):
                     self._advance()
+                if self._config.comment_as_token:
+                    comment = self._source[self._start + 2 : self._current]
+                    self._add_token(TokenType.SINGLELINECOMMENT, comment)
+            elif self._config.multi_line_comments and self._match("*"):
+                if self._config.nest_comments:
+                    self._nest_multiple_line_comments()
+                else:
+                    self._multiple_line_comments()
             else:
                 self._add_token(TokenType.SLASH)
         elif c in "\r \t":
@@ -169,3 +187,36 @@ class Scanner:
         text = self._source[self._start : self._current]
         type = _KEYWORDS.get(text, TokenType.IDENTIFIER)
         self._add_token(type)
+
+    def _multiple_line_comments(self) -> None:
+        while not self._is_at_end():
+            if self._match("\n"):
+                self._line+=1
+            elif self._match("*/"):
+                if self._config.comment_as_token:
+                    comment = self._source[self._start + 2 : self._current - 2]
+                    self._add_token(TokenType.MULTILINECOMMENT, comment)
+                return
+            else:
+                self._advance()
+
+        error.error(self._line, "Unterminated multiple line comments")
+
+    def _nest_multiple_line_comments(self) -> None:
+        level = 1
+        while not self._is_at_end():
+            if self._match("\n"):
+                self._line += 1
+            elif self._match("*/"):
+                level -= 1
+                if level == 0:
+                    if self._config.comment_as_token:
+                        comment = self._source[self._start + 2 : self._current - 2]
+                        self._add_token(TokenType.MULTILINECOMMENT, comment)
+                    return
+            elif self._match("/*"):
+                level += 1
+            else:
+                self._advance()
+        pass
+        error.error(self._line, "Unterminated multiple line comments")
