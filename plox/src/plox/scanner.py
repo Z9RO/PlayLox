@@ -102,7 +102,10 @@ class Scanner:
                     comment = self._source[self._start + 2 : self._current]
                     self._add_token(TokenType.SINGLELINECOMMENT, comment)
             elif self._config.multi_line_comments and self._match("*"):
-                self._multiple_line_comments()
+                if self._config.nest_comments:
+                    self._nest_multiple_line_comments()
+                else:
+                    self._multiple_line_comments()
             else:
                 self._add_token(TokenType.SLASH)
         elif c in "\r \t":
@@ -196,3 +199,24 @@ class Scanner:
                     comment = self._source[self._start + 2 : self._current - 2]
                     self._add_token(TokenType.MULTILINECOMMENT, comment)
                 return
+
+        error.error(self._line, "Unterminated multiple line comments")
+
+    def _nest_multiple_line_comments(self) -> None:
+        level = 1
+        while not self._is_at_end():
+            if self._match("\n"):
+                self._line += 1
+            elif self._match("*/"):
+                level -= 1
+                if level == 0:
+                    if self._config.comment_as_token:
+                        comment = self._source[self._start + 2 : self._current - 2]
+                        self._add_token(TokenType.MULTILINECOMMENT, comment)
+                    return
+            elif self._match("/*"):
+                level += 1
+            else:
+                self._advance()
+        pass
+        error.error(self._line, "Unterminated multiple line comments")

@@ -102,6 +102,25 @@ class TestScanner(unittest.TestCase):
         ]
         self.assertEqual(result, expected)
 
+    def test_next_comments(self):
+        source = """1 /*23*3/*
+        2 */ 00
+        90
+        */"""
+        config = ScannerConfig(True, True, True)
+        scanner = Scanner(source, config)
+        result = scanner.scan_tokens()
+        comments = """23*3/*
+        2 */ 00
+        90
+        """
+        expected = [
+            Token(TokenType.NUMBER, "1", None, 1),
+            Token(TokenType.MULTILINECOMMENT, "", comments, 4),
+            Token(TokenType.EOF, "", None, 4),
+        ]
+        self.assertEqual(result, expected)
+
 
 if __name__ == "__main__":
     unittest.main()
