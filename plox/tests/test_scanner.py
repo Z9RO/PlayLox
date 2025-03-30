@@ -1,7 +1,7 @@
 import unittest
 
-from plox.scanner import Scanner
-from plox.token import Token, TokenType
+from plox.scanner import Scanner, ScannerConfig
+from plox.lox_token import Token, TokenType
 
 
 class TestScanner(unittest.TestCase):
@@ -69,7 +69,18 @@ class TestScanner(unittest.TestCase):
             Token(TokenType.EOF, "", None, 3),
         ]
         self.assertEqual(result, expected)
-    
+
+    def test_single_comment(self):
+        source = "1 // this is comment"
+        config = ScannerConfig(True, False)
+        scanner = Scanner(source, config)
+        result = scanner.scan_tokens()
+        expected = [
+            Token(TokenType.NUMBER, "1", None, 1),
+            Token(TokenType.SINGLELINECOMMENT, "// this is comment", None, 1),
+            Token(TokenType.EOF, "", None, 1),
+        ]
+        self.assertEqual(result, expected)
 
 
 

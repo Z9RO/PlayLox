@@ -48,6 +48,10 @@ class TokenType(Enum):
     VAR = (auto(),)
     WHILE = (auto(),)
 
+    # Comment.
+    SINGLELINECOMMENT = (auto(),)
+    MULTILINECOMMENT = (auto(),)
+
     EOF = (auto(),)
 
 
