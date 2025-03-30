@@ -190,15 +190,15 @@ class Scanner:
 
     def _multiple_line_comments(self) -> None:
         while not self._is_at_end():
-            c = self._advance()
-            if c == "\n":
-                self._line += 1
-            elif c == "*" and self._peek() == "/":
-                self._advance()
+            if self._match("\n"):
+                self._line+=1
+            elif self._match("*/"):
                 if self._config.comment_as_token:
                     comment = self._source[self._start + 2 : self._current - 2]
                     self._add_token(TokenType.MULTILINECOMMENT, comment)
                 return
+            else:
+                self._advance()
 
         error.error(self._line, "Unterminated multiple line comments")
 
