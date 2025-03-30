@@ -52,29 +52,29 @@ _DOUBLE_CHAR_TOKENS = {
 
 
 class Scanner:
-    source: str
-    tokens: list[Token]
-    start: int
-    current: int
-    line: int
+    _source: str
+    _tokens: list[Token]
+    _start: int
+    _current: int
+    _line: int
 
     def __init__(self, source: str):
-        self.source = source
-        self.start = 0
-        self.current = 0
-        self.line = 1
-        self.tokens = []
+        self._source = source
+        self._start = 0
+        self._current = 0
+        self._line = 1
+        self._tokens = []
 
     def scan_tokens(self) -> list[Token]:
         while not self._is_at_end():
-            self.start = self.current
+            self._start = self._current
             self._scan_token()
 
-        self.tokens.append(Token(TokenType.EOF, "", None, self.line))
-        return self.tokens
+        self._tokens.append(Token(TokenType.EOF, "", None, self._line))
+        return self._tokens
 
     def _is_at_end(self) -> bool:
-        return self.current >= len(self.source)
+        return self._current >= len(self._source)
 
     def _scan_token(self) -> None:
         c = self._advance()
@@ -94,7 +94,7 @@ class Scanner:
             # ignore whitespace
             pass
         elif c == "\n":
-            self.line += 1
+            self._line += 1
         elif c == '"':
             self._string()
         elif isdigit(c):
@@ -102,52 +102,52 @@ class Scanner:
         elif is_alpha(c):
             self._identifier()
         else:
-            error.error(self.line, f"Unexpected character: {c}.")
+            error.error(self._line, f"Unexpected character: {c}.")
 
         pass
 
     def _advance(self) -> str:
-        char = self.source[self.current]
-        self.current += 1
+        char = self._source[self._current]
+        self._current += 1
         return char
 
     def _add_token(self, type: TokenType, literal: object = None) -> None:
-        text = self.source[self.start : self.current]
-        self.tokens.append(Token(type, text, literal, self.line))
+        text = self._source[self._start : self._current]
+        self._tokens.append(Token(type, text, literal, self._line))
 
     def _match(self, expected: str) -> bool:
         if self._is_at_end():
             return False
-        elif not self.source[self.current :].startswith(expected):
+        elif not self._source[self._current :].startswith(expected):
             return False
         else:
-            self.current += len(expected)
+            self._current += len(expected)
             return True
 
     def _peek(self) -> str:
         if self._is_at_end():
             return "\n"
         else:
-            return self.source[self.current : self.current + 1]
+            return self._source[self._current : self._current + 1]
 
     def _peek_next(self) -> str:
-        if (self.current + 1) >= len(self.source):
+        if (self._current + 1) >= len(self._source):
             return "\n"
-        return self.source[self.current + 1 : self.current + 2]
+        return self._source[self._current + 1 : self._current + 2]
 
     def _string(self) -> None:
         while (self._peek() != '"') and (not self._is_at_end()):
             if self._peek() == "\n":
-                self.line += 1
+                self._line += 1
             self._advance()
 
         if self._is_at_end():
-            error.error(self.line, "Unterminated string.")
+            error.error(self._line, "Unterminated string.")
 
         # consume `"`
         self._advance()
 
-        value = self.source[self.start + 1 : self.current - 1]
+        value = self._source[self._start + 1 : self._current - 1]
         self._add_token(TokenType.STRING, value)
 
     def _number(self) -> None:
@@ -159,11 +159,11 @@ class Scanner:
             while isdigit(self._peek()):
                 self._advance()
 
-        self._add_token(TokenType.NUMBER, float(self.source[self.start : self.current]))
+        self._add_token(TokenType.NUMBER, float(self._source[self._start : self._current]))
 
     def _identifier(self) -> None:
         while is_digit_or_alpha(self._peek()) or self._peek() == "_":
             self._advance()
-        text = self.source[self.start : self.current]
+        text = self._source[self._start : self._current]
         type = _KEYWORDS.get(text, TokenType.IDENTIFIER)
         self._add_token(type)
