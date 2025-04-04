@@ -3,16 +3,24 @@ from plox import error
 from plox.expr import BinaryExpr, Expr, GroupExpr, LiteralExpr, UnaryExpr
 from plox.lox_token import Token, TokenType
 
+
 class ParseException(Exception):
     pass
 
-class parser:
+
+class Parser:
     _tokens: list[Token]
     _current: int
 
     def __init__(self, tokens: list[Token]):
         self._tokens = tokens
         self._current = 0
+
+    def parse(self) -> Expr | None:
+        try:
+            return self._expression()
+        except ParseException:
+            return None
 
     def _expression(self) -> Expr:
         return self._equality()
@@ -70,18 +78,20 @@ class parser:
             return LiteralExpr(None)
         elif self._match(TokenType.NUMBER, TokenType.STRING):
             return LiteralExpr(self._previous().literal)
-        
+
         if self._match(TokenType.LEFT_PAREN) is not None:
             expr = self._expression()
             self._consume(TokenType.RIGHT_PAREN, "Expect ')' after expression.")
             return GroupExpr(expr)
-        
+
         raise self._error(self._peek(), "No match")
 
     def _match(self, *types: TokenType) -> TokenType | None:
         if self._is_at_end():
             return None
         type = next(filter(self._check, types), None)
+        if type is not None:
+            self._advance()
         return type
 
     def _is_at_end(self) -> bool:
@@ -103,13 +113,33 @@ class parser:
 
     def _previous(self) -> Token:
         return self._tokens[self._current - 1]
-    
+
     def _consume(self, type: TokenType, message: str) -> Token:
         if self._check(type):
             return self._advance()
-        
+
         raise self._error(self._peek(), message)
-    
-    def _error(self, token: Token, message: str)-> ParseException:
+
+    def _error(self, token: Token, message: str) -> ParseException:
         error.error(token.line, message)
         return ParseException()
+
+    def _synchronize(self):
+        self._advance()
+
+        while not self._is_at_end():
+            if self._previous().type == TokenType.SEMICOLON:
+                return
+            match self._peek().type:
+                case (
+                    TokenType.CLASS
+                    | TokenType.FUN
+                    | TokenType.VAR
+                    | TokenType.FOR
+                    | TokenType.IF
+                    | TokenType.WHILE
+                    | TokenType.PRINT
+                    | TokenType.RETURN
+                ):
+                    return
+            self._advance()
